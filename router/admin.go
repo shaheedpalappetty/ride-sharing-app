@@ -2,14 +2,17 @@ package router
 
 import (
 	"taxi_app/controllers"
+	"taxi_app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AdminRouter(r *gin.Engine) {
-	r.GET("/pendingdrivers", controllers.GetPendingDrivers)
-	r.PATCH("/acceptdriver/:id", controllers.AcceptDrivers)
-	r.PATCH("/rejectdriver/:id", controllers.RejectDrivers)
-	r.GET("/accepteddrivers", controllers.GetAcceptedDrivers)
-	r.GET("/rejecteddrivers", controllers.GetRejectedDrivers)
+func AdminRouter(router *gin.Engine) {
+	r := router.Group("/admin")
+	r.POST("/login", controllers.AdminLogin)
+	r.GET("/pendingdrivers", middleware.AdminAuth, controllers.GetPendingDrivers)
+	r.PATCH("/acceptdriver/:id", middleware.AdminAuth, controllers.AcceptDrivers)
+	r.PATCH("/rejectdriver/:id", middleware.AdminAuth, controllers.RejectDrivers)
+	r.GET("/accepteddrivers", middleware.AdminAuth, controllers.GetAcceptedDrivers)
+	r.GET("/rejecteddrivers", middleware.AdminAuth, controllers.GetRejectedDrivers)
 }

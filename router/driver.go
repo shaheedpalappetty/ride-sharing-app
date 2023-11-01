@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DriverRouter(r *gin.Engine) {
-	r.POST("/adddriver", controllers.AddDriver)
-	r.POST("/adddocuments", controllers.AddDocuments)
-	r.POST("/addvehicledetails", controllers.AddVehicleDetails)
-	r.GET("/driverdetail", controllers.GetDriverDetail)
+func DriverRouter(router *gin.Engine) {
+	r := router.Group("/driver")
+	r.POST("/create", controllers.AddDriver)
+	r.POST("/documents", controllers.AddDocuments)
+	r.POST("/vehicledetails", controllers.AddVehicleDetails)
+	r.GET("/detail", controllers.GetDriverDetail)
 
-	
 }
