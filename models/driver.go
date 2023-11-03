@@ -14,4 +14,5 @@ type Driver struct {
 	Qualification string `json:"qualification" gorm:"not null"`
 	Experience    string `json:"experience" gorm:"not null"`
 	Status        string `json:"status"`
+	Description   string `json:"description"`
 }

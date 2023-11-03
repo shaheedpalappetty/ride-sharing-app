@@ -26,7 +26,7 @@ func AdminLogin(c *gin.Context) {
 	}
 	username := os.Getenv("USER_NAME")
 	password := os.Getenv("PASSWORD")
-	if username != credentials.Username && password != credentials.Password {
+	if username != credentials.Username || password != credentials.Password {
 		c.JSON(400, gin.H{
 			"error": "incorrect username or password",
 		})
@@ -41,10 +41,10 @@ func AdminLogin(c *gin.Context) {
 	}
 	//set token into browser
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("jwt_admin", token, 3600*24 * 30, "", "", true, true)
+	c.SetCookie("jwt_admin", token, 3600*24*30, "", "", true, true)
 	//success message
 	c.JSON(200, gin.H{
-		"message": "Successfully logged admin",
+		"token": token,
 	})
 
 }
@@ -113,16 +113,52 @@ func AcceptDrivers(c *gin.Context) {
 //Reject Driver
 
 func RejectDrivers(c *gin.Context) {
+
 	id, _ := strconv.Atoi(c.Param("id"))
-	if err := database.DB.Model(&models.Driver{}).Where("id=?", id).Update("status", "Rejected").Error; err != nil {
+	var driver models.Driver
+	if err := database.DB.First(&driver, id).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error": "failed to find user",
 		})
 		return
 	}
+
+	var data struct {
+		Status      string `json:"status"`
+		Description string `json:"description"`
+	}
+	if err := c.Bind(&data); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to bind data",
+		})
+	}
+
+	// Set the Description and the status
+	body := map[string]interface{}{
+		"status":      data.Status,
+		"description": data.Description,
+	}
+
+	// Update the record with the new credentials
+	if err := database.DB.Model(&models.Driver{}).Where("id = ?", id).Updates(body).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": "failed to update details in database",
+		})
+		return
+	}
 	c.JSON(200, gin.H{
-		"success": "Rejected",
+		"success": "Rejected Successfully",
 	})
+	// id, _ := strconv.Atoi(c.Param("id"))
+	// if err := database.DB.Model(&models.Driver{}).Where("id=?", id).Update("status", "Rejected").Error; err != nil {
+	// 	c.JSON(400, gin.H{
+	// 		"error": "failed to find user",
+	// 	})
+	// 	return
+	// }
+	// c.JSON(200, gin.H{
+	// 	"success": "Rejected",
+	// })
 
 }
 
@@ -162,4 +198,43 @@ func GetRejectedDrivers(c *gin.Context) {
 		"datas": details,
 	})
 
+}
+
+// Create Coupons
+func CreateCoupons(c *gin.Context) {
+	var coupon models.Coupons
+	if err := c.Bind(&coupon); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Bind Coupon Details",
+		})
+		return
+	}
+
+	if err := database.DB.Create(&coupon).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": "failed to add details in database",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": "Successfully Added Coupon",
+	})
+}
+
+//Get Ongoing Coupons
+
+func GetOngoingCoupons(c *gin.Context) {
+	today := c.Query("date")
+	var coupons []models.Coupons
+
+	if err := database.DB.Where("start_date <= ? AND end_date >= ?", today, today).Find(&coupons).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to fetch ongoing coupons",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"coupons": coupons,
+	})
 }

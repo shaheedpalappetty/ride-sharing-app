@@ -12,5 +12,5 @@ func DriverRouter(router *gin.Engine) {
 	r.POST("/documents", controllers.AddDocuments)
 	r.POST("/vehicledetails", controllers.AddVehicleDetails)
 	r.GET("/detail", controllers.GetDriverDetail)
-
+	r.POST("/login", controllers.Driverlogin)
 }
