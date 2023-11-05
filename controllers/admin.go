@@ -7,7 +7,6 @@ import (
 	"taxi_app/database"
 	"taxi_app/helper"
 	"taxi_app/models"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -149,16 +148,6 @@ func RejectDrivers(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"success": "Rejected Successfully",
 	})
-	// id, _ := strconv.Atoi(c.Param("id"))
-	// if err := database.DB.Model(&models.Driver{}).Where("id=?", id).Update("status", "Rejected").Error; err != nil {
-	// 	c.JSON(400, gin.H{
-	// 		"error": "failed to find user",
-	// 	})
-	// 	return
-	// }
-	// c.JSON(200, gin.H{
-	// 	"success": "Rejected",
-	// })
 
 }
 

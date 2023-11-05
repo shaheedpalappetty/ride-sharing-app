@@ -35,9 +35,10 @@ func AddDriver(c *gin.Context) {
 	}
 	c.JSON(200, driver.ID)
 }
-//Login Driver
-func Driverlogin(c *gin.Context){
-	id,_:=strconv.Atoi(c.Param("id"))
+
+// Login Driver
+func Driverlogin(c *gin.Context) {
+
 	var credentials struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -48,15 +49,15 @@ func Driverlogin(c *gin.Context){
 			"error": "failed to bind",
 		})
 		return
-	} 
+	}
 	var driver models.Driver
-	if err := database.DB.First(&driver, id).Error; err != nil {
+	if err := database.DB.Where("user_name =?", credentials.Username).First(&driver).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error": "failed to find user",
 		})
 		return
 	}
-	if driver.UserName!=credentials.Username || driver.Password != credentials.Password {
+	if driver.UserName != credentials.Username || driver.Password != credentials.Password {
 		c.JSON(400, gin.H{
 			"error": "incorrect username or password",
 		})
@@ -65,8 +66,9 @@ func Driverlogin(c *gin.Context){
 	c.JSON(200, gin.H{
 		"driver": driver,
 	})
-	
+
 }
+
 // Add User Documents
 func AddDocuments(c *gin.Context) {
 	var documents models.DriverDocuments
