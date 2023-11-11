@@ -1,6 +1,6 @@
 package main
 
-import ( 
+import (
 	"log"
 	"taxi_app/database"
 	"taxi_app/router"
@@ -20,5 +20,6 @@ func main() {
 	r := gin.Default()
 	router.DriverRouter(r)
 	router.AdminRouter(r)
+	router.UserRouter(r)
 	r.Run(":8080")
 }

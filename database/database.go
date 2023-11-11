@@ -24,5 +24,6 @@ func ConnectToDB() {
 	DB.AutoMigrate(&models.VehicleDetails{})
 	DB.AutoMigrate(&models.DriverDocuments{})
 	DB.AutoMigrate(&models.Coupons{})
+	DB.AutoMigrate(&models.User{})
 
 }
