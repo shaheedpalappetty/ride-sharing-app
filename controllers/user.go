@@ -34,7 +34,7 @@ func SignUpUser(c *gin.Context) {
 }
 
 // Login User(Sign In)
-func LoginUser(c *gin.Context) {
+func LoginUser(c *gin.Context) { 
 	var credentials struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -63,3 +63,8 @@ func LoginUser(c *gin.Context) {
 		"user": user,
 	})
 }
+
+func GetDriversListAccordingtoVehicleType(c *gin.Context){
+	
+}
+

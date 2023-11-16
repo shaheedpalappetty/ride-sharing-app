@@ -15,4 +15,6 @@ type Driver struct {
 	Experience    string `json:"experience" gorm:"not null"`
 	Status        string `json:"status"`
 	Description   string `json:"description"`
+	Latitude      string `json:"latitude"`
+	Longitude     string `json:"longitude"`
 }
