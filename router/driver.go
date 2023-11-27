@@ -13,11 +13,8 @@ func DriverRouter(router *gin.Engine) {
 	r.POST("/vehicledetails", controllers.AddVehicleDetails)
 	r.GET("/detail", controllers.GetDriverDetail)
 	r.POST("/login", controllers.Driverlogin)
-	r.GET("/ws", controllers.Socket)
+	r.POST("/status/:number", controllers.CheckDriverStatus)
+	r.PATCH("/updatelocation/:id", controllers.UpdateLocation)
+
+	// r.GET("/ws", controllers.Socket)
 }
-
-
-
-
-
-

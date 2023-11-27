@@ -21,5 +21,7 @@ func main() {
 	router.DriverRouter(r)
 	router.AdminRouter(r)
 	router.UserRouter(r)
+	router.BookingRouter(r)
+	router.FirebaseRouter(r)
 	r.Run(":8080")
 }

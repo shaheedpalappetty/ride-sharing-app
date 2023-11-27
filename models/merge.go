@@ -17,11 +17,11 @@ type Detail struct {
 	BirthDate     string
 	DriverImg     string
 	Gender        string
-	Qualification string
 	Experience    string
 	Status        string
 	VehicleBrand  string
 	VehicleModel  string
+	VehicleType   string
 	VehicleYear   string
 	VehicleColor  string
 	VehicleSeat   string

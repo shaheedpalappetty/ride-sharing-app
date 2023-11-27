@@ -7,6 +7,7 @@ import (
 	"taxi_app/database"
 	"taxi_app/helper"
 	"taxi_app/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,7 +53,7 @@ func AdminLogin(c *gin.Context) {
 func GetPendingDrivers(c *gin.Context) {
 	var details []models.Detail
 	if err := database.DB.Table("drivers").
-		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.qualification,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
+		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
 		Joins("INNER JOIN driver_documents ON driver_documents.user_id=drivers.id").
 		Joins("INNER JOIN vehicle_details ON vehicle_details.user_id=drivers.id").
 		Where("status=?", "Pending").Scan(&details).Error; err != nil {
@@ -155,7 +156,7 @@ func RejectDrivers(c *gin.Context) {
 func GetAcceptedDrivers(c *gin.Context) {
 	var details []models.Detail
 	if err := database.DB.Table("drivers").
-		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.qualification,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
+		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
 		Joins("INNER JOIN driver_documents ON driver_documents.user_id=drivers.id").
 		Joins("INNER JOIN vehicle_details ON vehicle_details.user_id=drivers.id").
 		Where("status=?", "Accepted").Scan(&details).Error; err != nil {
@@ -174,7 +175,7 @@ func GetAcceptedDrivers(c *gin.Context) {
 func GetRejectedDrivers(c *gin.Context) {
 	var details []models.Detail
 	if err := database.DB.Table("drivers").
-		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.qualification,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
+		Select("driver_documents.license_no,driver_documents.licence_exp,driver_documents.licence_front,driver_documents.licence_back,driver_documents.adhar_no,driver_documents.adhar_address,driver_documents.adhar_front,adhar_back,drivers.id,drivers.name,drivers.last_name,drivers.phone_number,drivers.email,drivers.birth_date,drivers.driver_img,drivers.gender,drivers.experience,drivers.status,vehicle_details.vehicle_brand,vehicle_details.vehicle_model,vehicle_details.vehicle_year,vehicle_details.vehicle_color,vehicle_details.vehicle_seat,vehicle_details.vehicle_number").
 		Joins("INNER JOIN driver_documents ON driver_documents.user_id=drivers.id").
 		Joins("INNER JOIN vehicle_details ON vehicle_details.user_id=drivers.id").
 		Where("status=?", "Rejected").Scan(&details).Error; err != nil {

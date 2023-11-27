@@ -126,3 +126,48 @@ func GetDriverDetail(c *gin.Context) {
 		"driver": driver,
 	})
 }
+//Check Driver status by Mobile Number
+func CheckDriverStatus(c *gin.Context) {
+	number := c.Param("number")
+	
+	var driver models.Driver
+	if err := database.DB.Where("phone_number=?", number).First(&driver).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to find user",
+		})
+		return
+	}
+	c.JSON(200, driver.Status)
+}
+
+// Update Location of driver
+func UpdateLocation(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var position struct {
+		Latitude  string `json:"latitude"`
+		Longitude string `json:"longitude"`
+	}
+	if err := c.Bind(&position); err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to Bind data",
+		})
+		return
+	}
+
+	body := map[string]interface{}{
+		"latitude":  position.Latitude,
+		"longitude": position.Longitude,
+	}
+	
+
+	if err := database.DB.Model(&models.Driver{}).Where("id = ?", id).Updates(body).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": "failed to update details in database",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": "Updated Location Successfully",
+	})
+
+}
