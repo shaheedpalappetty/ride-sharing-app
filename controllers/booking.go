@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strconv"
 	"taxi_app/database"
 	"taxi_app/models"
 
@@ -127,17 +128,40 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 func toRadians(deg float64) float64 {
 	return deg * (math.Pi / 180)
 }
-//Get Token of Driver and User
+
+// Get Token of Driver and User
 func ConfirmRide(c *gin.Context) {
 	id := c.Param("driver_id")
 	var firebase models.Firebase
-	if err := database.DB.Where("user_id = ? AND category = ?", id, "Driver").First(&firebase).Error; err != nil {
-		c.JSON(400,gin.H{
-			"error":"Failed to find Data",
+	if err := database.DB.Where("user_id = ? AND category = ? AND status = ?", id, "Driver", "Active").First(&firebase).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to find Data",
 		})
 		return
 	}
 	c.JSON(200, gin.H{
 		"success": firebase.Token,
+	})
+}
+
+func UpdateRideStatus(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("userid"))
+	var status struct {
+		Status string `json:"status"`
+	}
+	if err := c.Bind(&status); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Bind Data",
+		})
+		return
+	}
+	if err := database.DB.Model(&models.Booking{}).Where("user_id = ?", id).Update("status", status.Status).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Update Data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": "Succefully Updated data",
 	})
 }
