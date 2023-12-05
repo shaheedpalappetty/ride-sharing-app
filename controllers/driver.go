@@ -1,10 +1,10 @@
 package controllers
 
 import (
+	"math"
 	"strconv"
 	"taxi_app/database"
 	"taxi_app/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
@@ -126,10 +126,11 @@ func GetDriverDetail(c *gin.Context) {
 		"driver": driver,
 	})
 }
-//Check Driver status by Mobile Number
+
+// Check Driver status by Mobile Number
 func CheckDriverStatus(c *gin.Context) {
 	number := c.Param("number")
-	
+
 	var driver models.Driver
 	if err := database.DB.Where("phone_number=?", number).First(&driver).Error; err != nil {
 		c.JSON(400, gin.H{
@@ -158,7 +159,6 @@ func UpdateLocation(c *gin.Context) {
 		"latitude":  position.Latitude,
 		"longitude": position.Longitude,
 	}
-	
 
 	if err := database.DB.Model(&models.Driver{}).Where("id = ?", id).Updates(body).Error; err != nil {
 		c.JSON(500, gin.H{
@@ -170,4 +170,68 @@ func UpdateLocation(c *gin.Context) {
 		"success": "Updated Location Successfully",
 	})
 
+}
+
+func GetFare(c *gin.Context) {
+	var values Coordinate
+	if err := c.Bind(&values); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed To Bind Data",
+		})
+		return
+	}
+	fare := CalculateFare(values)
+	c.JSON(200, gin.H{
+		"success": fare,
+	})
+
+}
+
+const (
+	baseFare         = 50.0 // Base fare
+	farePerKilometer = 13.5 // Fare per kilometer
+)
+
+// Coordinate represents a geographical coordinate with latitude and longitude.
+type Coordinate struct {
+	SLatitude  float64 `json:"slatitude"`
+	SLongitude float64 `json:"slongitude"`
+	ELatitude  float64 `json:"elatitude"`
+	ELongitude float64 `json:"elongitude"`
+}
+
+// CalculateDistance calculates the distance between two coordinates using Haversine formula.
+func CalculateDistance(coord Coordinate) float64 {
+	const earthRadius = 6371 // Earth radius in kilometers
+
+	// Convert latitude and longitude from degrees to radians
+	lat1 := degToRad(coord.SLatitude)
+	lon1 := degToRad(coord.SLongitude)
+	lat2 := degToRad(coord.ELatitude)
+	lon2 := degToRad(coord.ELongitude)
+
+	// Calculate differences in coordinates
+	dlat := lat2 - lat1
+	dlon := lon2 - lon1
+
+	// Haversine formula
+	a := math.Sin(dlat/2)*math.Sin(dlat/2) + math.Cos(lat1)*math.Cos(lat2)*math.Sin(dlon/2)*math.Sin(dlon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	// Distance in kilometers
+	distance := earthRadius * c
+
+	return distance
+}
+
+// degToRad converts degrees to radians.
+func degToRad(deg float64) float64 {
+	return deg * (math.Pi / 180)
+}
+
+// CalculateFare calculates the fare based on the distance.
+func CalculateFare(cordinates Coordinate) float64 {
+	distance := CalculateDistance(cordinates)
+	fare := baseFare + distance*farePerKilometer
+	return fare
 }

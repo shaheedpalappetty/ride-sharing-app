@@ -15,6 +15,7 @@ func DriverRouter(router *gin.Engine) {
 	r.POST("/login", controllers.Driverlogin)
 	r.POST("/status/:number", controllers.CheckDriverStatus)
 	r.PATCH("/updatelocation/:id", controllers.UpdateLocation)
+	r.POST("fare", controllers.GetFare)
 
 	// r.GET("/ws", controllers.Socket)
 }
