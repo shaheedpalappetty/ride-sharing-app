@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"taxi_app/database"
 	"taxi_app/router"
 
@@ -18,10 +19,16 @@ func init() {
 
 func main() {
 	r := gin.Default()
+
 	router.DriverRouter(r)
+
 	router.AdminRouter(r)
+
 	router.UserRouter(r)
+
 	router.BookingRouter(r)
+
 	router.FirebaseRouter(r)
-	r.Run(":8080")
+
+	r.Run(":" + os.Getenv("PORT"))
 }

@@ -8,6 +8,12 @@ import (
 
 func UserRouter(router *gin.Engine) {
 	r := router.Group("/user")
-	r.POST("/signup", controllers.SignUpUser)
-	r.POST("/signin",controllers.LoginUser)
+	{
+		r.POST("/signup", controllers.SignUpUser)
+		r.POST("/signin", controllers.LoginUser)
+		r.PATCH("/payment", controllers.Payment)
+		r.GET("/paymentdetails/:user_id", controllers.CompletedTrips)
+		r.GET("/activetrip", controllers.ActiveTrips)
+	}
+
 }

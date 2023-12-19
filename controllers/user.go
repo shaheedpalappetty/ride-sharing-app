@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"strconv"
 	"taxi_app/database"
 	"taxi_app/models"
 
@@ -34,7 +35,7 @@ func SignUpUser(c *gin.Context) {
 }
 
 // Login User(Sign In)
-func LoginUser(c *gin.Context) { 
+func LoginUser(c *gin.Context) {
 	var credentials struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -64,7 +65,78 @@ func LoginUser(c *gin.Context) {
 	})
 }
 
-func GetDriversListAccordingtoVehicleType(c *gin.Context){
-	
+func Payment(c *gin.Context) {
+	var input struct {
+		UserId   int    `json:"userid"`
+		DriverId int    `json:"driverid"`
+		Date     string `json:"date"`
+		Status   string `json:"status"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Bind data",
+		})
+		return
+	}
+	var booking models.Booking
+	if err := database.DB.Where("user_id = ?", input.UserId).Last(&booking).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to fetch data from database",
+		})
+		return
+	}
+	if err := database.DB.Model(&models.Payment{}).Where("booking_id", booking.ID).Update("status", input.Status).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Upadte Payment Deatails",
+		})
+	}
+	c.JSON(200, gin.H{
+		"message": "successfully added payment details",
+	})
 }
 
+type BookingDetails struct {
+	ID        int
+	BookingID int
+	User_id   int
+	Date      string
+	DriverId  int
+	Distance  float64
+	Fare      int
+	Status    string
+	Name      string
+	DriverImg string
+}
+
+func CompletedTrips(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("user_id"))
+
+	var payments []BookingDetails
+	if err := database.DB.Table("payments").Select("payments.id,payments.booking_id,payments.user_id,payments.date,payments.driver_id,payments.distance,payments.fare,payments.status,drivers.name,drivers.driver_img").
+		Joins("INNER JOIN drivers ON drivers.id=payments.driver_id").Where("payments.user_id=? AND payments.status=?", id, "Paid").Scan(&payments).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to get data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"payments": payments,
+	})
+
+}
+
+func ActiveTrips(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("user_id"))
+	var payments []BookingDetails
+	if err := database.DB.Table("payments").Select("payments.id,payments.booking_id,payments.user_id,payments.date,payments.driver_id,payments.distance,payments.fare,payments.status,drivers.name,drivers.driver_img").
+		Joins("INNER JOIN drivers ON drivers.id=payments.driver_id").Where("payments.user_id=? AND payments.status=?", id, "pending").Scan(&payments).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to get data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"payments": payments,
+	})
+}

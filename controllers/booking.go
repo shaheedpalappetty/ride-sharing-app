@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"log"
-	"math"
-	"sort"
 	"strconv"
 	"taxi_app/database"
+	"taxi_app/helper"
 	"taxi_app/models"
 
 	"github.com/gin-gonic/gin"
@@ -34,11 +32,11 @@ func RequestRide(c *gin.Context) {
 	}
 
 	//find nearest drivers
-	nearestDrivers, err := findNearestDrivers(booking.PickupLat, booking.PickupLong, 3)
+	nearestDrivers, err := helper.FindNearestDrivers(booking.PickupLat, booking.PickupLong, 3)
 	//get the driver details
-	var driver models.Detail
+	var driver models.AvailableDrivers
 
-	var drivers []models.Detail
+	var drivers []models.AvailableDrivers
 
 	for i := range nearestDrivers {
 		if err := database.DB.Table("drivers").
@@ -51,6 +49,13 @@ func RequestRide(c *gin.Context) {
 			})
 			return
 		}
+		fare := helper.CalculateFareWithVehicleType(models.Coordinate{
+			SLatitude:  booking.PickupLat,
+			SLongitude: booking.PickupLong,
+			ELatitude:  booking.DropoffLat,
+			ELongitude: booking.DropoffLong,
+		}, driver.VehicleType)
+		driver.Fare = fare
 		drivers = append(drivers, driver)
 	}
 
@@ -60,74 +65,14 @@ func RequestRide(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(200, gin.H{
 		"success": drivers,
 	})
 
 }
 
-type Location struct {
-	ID        int
-	Latitude  float64
-	Longitude float64
-}
 
-func findNearestDrivers(PickupLat float64, PickupLong float64, count int) ([]Location, error) {
-	distanceMap := make(map[float64]Location)
-	// get driver Locations
-	var driverLocations []Location
-	if err := database.DB.Table("drivers").Select("id", "latitude", "longitude").Scan(&driverLocations).Error; err != nil {
-		return nil, err
-	}
-	log.Println(driverLocations)
-	// Calculate distances for each driver
-	for _, driverLocation := range driverLocations {
-		distance := haversine(PickupLat, PickupLat, driverLocation.Latitude, driverLocation.Longitude)
-		distanceMap[distance] = driverLocation
-	}
-
-	// Sort distances
-	distances := make([]float64, 0, len(distanceMap))
-	for distance := range distanceMap {
-		distances = append(distances, distance)
-	}
-	sort.Float64s(distances)
-
-	// Select nearest drivers
-	nearestDrivers := make([]Location, 0, count)
-	for i := 0; i < count && i < len(distances); i++ {
-		nearestDrivers = append(nearestDrivers, distanceMap[distances[i]])
-	}
-
-	return nearestDrivers, nil
-}
-
-func haversine(lat1, lon1, lat2, lon2 float64) float64 {
-	const earthRadius = 6371 // Earth radius in kilometers
-
-	// Convert degrees to radians
-	lat1Rad := toRadians(lat1)
-	lon1Rad := toRadians(lon1)
-	lat2Rad := toRadians(lat2)
-	lon2Rad := toRadians(lon2)
-
-	// Calculate differences
-	dLat := lat2Rad - lat1Rad
-	dLon := lon2Rad - lon1Rad
-
-	// Haversine formula
-	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Sin(dLon/2)*math.Sin(dLon/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	// Distance in kilometers
-	distance := earthRadius * c
-
-	return distance
-}
-
-func toRadians(deg float64) float64 {
-	return deg * (math.Pi / 180)
-}
 
 // Get Token of Driver and User
 func ConfirmRide(c *gin.Context) {
@@ -143,7 +88,6 @@ func ConfirmRide(c *gin.Context) {
 		"success": firebase.Token,
 	})
 }
-
 func UpdateRideStatus(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("userid"))
 	var status struct {
@@ -164,4 +108,75 @@ func UpdateRideStatus(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"success": "Succefully Updated data",
 	})
+}
+
+func GetRideFare(c *gin.Context) {
+	var input struct {
+		ELatitude  float64 `json:"elatitude"`
+		ELongitude float64 `json:"elongitude"`
+		UserId     int     `json:"userid"`
+		DriverId   int     `json:"driverid"`
+		Date       string  `json:"date"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Bind data",
+		})
+		return
+	}
+
+	var booking models.Booking
+	if err := database.DB.Where("user_id = ?", input.UserId).Last(&booking).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to fetch data from database",
+		})
+		return
+	}
+
+	if err := database.DB.Model(&models.Booking{}).Where("id=?", booking.ID).Updates(map[string]interface{}{
+		"dropoff_lat":  input.ELatitude,
+		"dropoff_long": input.ELongitude,
+	}).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Update Location in Bookings Table",
+		})
+		return
+	}
+	var driver models.VehicleDetails
+	if err := database.DB.Where("user_id = ?", input.DriverId).First(&driver).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to get data",
+		})
+		return
+	}
+
+	coordinate := models.Coordinate{
+		SLatitude:  booking.PickupLat,
+		SLongitude: booking.PickupLong,
+		ELatitude:  input.ELatitude,
+		ELongitude: input.ELongitude,
+	}
+
+	fare := helper.CalculateFareWithVehicleType(coordinate, driver.VehicleType)
+
+	if err := database.DB.Create(&models.Payment{
+		BookingID: booking.ID,
+		User_id:   input.UserId,
+		Date:      input.Date,
+		DriverId:  driver.UserID,
+		Distance:  helper.CalculateDistance(coordinate),
+		Fare:      fare,
+		Status:    "pending",
+	}).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to create data",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"fare": helper.CalculateFareWithVehicleType(coordinate, driver.VehicleType),
+	})
+
 }

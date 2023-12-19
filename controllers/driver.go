@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"math"
 	"strconv"
 	"taxi_app/database"
 	"taxi_app/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
@@ -172,66 +172,84 @@ func UpdateLocation(c *gin.Context) {
 
 }
 
-func GetFare(c *gin.Context) {
-	var values Coordinate
-	if err := c.Bind(&values); err != nil {
+func StartTrip(c *gin.Context) {
+	var input struct {
+		SLatitude  float64 `json:"slatitude"`
+		SLongitude float64 `json:"slongitude"`
+		UserId     int     `json:"userid"`
+	}
+
+	if err := c.Bind(&input); err != nil {
 		c.JSON(400, gin.H{
-			"error": "Failed To Bind Data",
+			"error": "Failed to Bind data",
 		})
 		return
 	}
-	fare := CalculateFare(values)
+
+	var booking models.Booking
+	if err := database.DB.Where("user_id = ?", input.UserId).Last(&booking).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to fetch data from database",
+		})
+		return
+	}
+
+	if err := database.DB.Model(&models.Booking{}).Where("id=?", booking.ID).Updates(map[string]interface{}{
+		"pickup_lat":  input.SLatitude,
+		"pickup_long": input.SLongitude,
+	}).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Update Location in Bookings Table",
+		})
+		return
+	}
 	c.JSON(200, gin.H{
-		"success": fare,
+		"success": "Updated pickUp Location in booking table",
+	})
+}
+
+func Revenue(c *gin.Context) {
+	var input struct {
+		Driver_id int    `json:"driverid"`
+		Date      string `json:"date"`
+	}
+	if err := c.Bind(&input); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to get data",
+		})
+		return
+	}
+	var payments []models.Payment
+	if err := database.DB.Where("driver_id = ? AND date = ? AND status=?", input.Driver_id, input.Date, "Paid").Find(&payments).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to find data",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"payments": payments,
 	})
 
 }
 
-const (
-	baseFare         = 50.0 // Base fare
-	farePerKilometer = 13.5 // Fare per kilometer
-)
+func ChangeOnlineStatus(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Query("id"))
+	status := c.Query("status")
 
-// Coordinate represents a geographical coordinate with latitude and longitude.
-type Coordinate struct {
-	SLatitude  float64 `json:"slatitude"`
-	SLongitude float64 `json:"slongitude"`
-	ELatitude  float64 `json:"elatitude"`
-	ELongitude float64 `json:"elongitude"`
-}
+	var accepted bool
+	if status == "t" {
+		accepted = true
+	} else {
+		accepted = false
+	}
 
-// CalculateDistance calculates the distance between two coordinates using Haversine formula.
-func CalculateDistance(coord Coordinate) float64 {
-	const earthRadius = 6371 // Earth radius in kilometers
-
-	// Convert latitude and longitude from degrees to radians
-	lat1 := degToRad(coord.SLatitude)
-	lon1 := degToRad(coord.SLongitude)
-	lat2 := degToRad(coord.ELatitude)
-	lon2 := degToRad(coord.ELongitude)
-
-	// Calculate differences in coordinates
-	dlat := lat2 - lat1
-	dlon := lon2 - lon1
-
-	// Haversine formula
-	a := math.Sin(dlat/2)*math.Sin(dlat/2) + math.Cos(lat1)*math.Cos(lat2)*math.Sin(dlon/2)*math.Sin(dlon/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	// Distance in kilometers
-	distance := earthRadius * c
-
-	return distance
-}
-
-// degToRad converts degrees to radians.
-func degToRad(deg float64) float64 {
-	return deg * (math.Pi / 180)
-}
-
-// CalculateFare calculates the fare based on the distance.
-func CalculateFare(cordinates Coordinate) float64 {
-	distance := CalculateDistance(cordinates)
-	fare := baseFare + distance*farePerKilometer
-	return fare
+	if err := database.DB.Model(&models.Driver{}).Where("id=?", id).Update("online", accepted).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to update online status",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": "status updated",
+	})
 }
