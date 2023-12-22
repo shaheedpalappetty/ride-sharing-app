@@ -27,5 +27,6 @@ func ConnectToDB() {
 	DB.AutoMigrate(&models.User{})
 	DB.AutoMigrate(&models.Booking{})
 	DB.AutoMigrate(&models.Firebase{})
+	DB.AutoMigrate(&models.Payment{})
 
 }

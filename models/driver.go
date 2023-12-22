@@ -17,4 +17,6 @@ type Driver struct {
 	Description   string  `json:"description"`
 	Latitude      float64 `json:"latitude"`
 	Longitude     float64 `json:"longitude"`
+	Online        bool    `json:"online" gorm:"default:false"`
+
 }
