@@ -253,3 +253,30 @@ func ChangeOnlineStatus(c *gin.Context) {
 		"success": "status updated",
 	})
 }
+
+func GetRevenue(c *gin.Context){
+	var input struct {
+		Driver_id int    `json:"driverid"`
+		SDate      string `json:"start_date"`
+		EDate      string `json:"end_date"`
+
+	}
+	if err := c.Bind(&input); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to get data",
+		})
+		return
+	}
+	var payments []models.Payment
+	if err := database.DB.Where("driver_id = ? AND date BETWEEN ? AND ?", input.Driver_id, input.SDate,input.EDate).Find(&payments).Error;err!=nil{
+		c.JSON(400, gin.H{
+			"error": "Failed to get data from Database",
+		})
+	}
+	c.JSON(200, gin.H{
+		"success": payments,
+	})
+	
+
+	
+}

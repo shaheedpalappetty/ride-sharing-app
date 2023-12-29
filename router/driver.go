@@ -19,6 +19,7 @@ func DriverRouter(router *gin.Engine) {
 		r.PATCH("/starttrip", controllers.StartTrip)
 		r.POST("/revenue", controllers.Revenue)
 		r.PATCH("/online", controllers.ChangeOnlineStatus)
+		r.POST("/revenuebydate",controllers.GetRevenue)
 	}
 
 }
