@@ -14,6 +14,8 @@ func UserRouter(router *gin.Engine) {
 		r.PATCH("/payment", controllers.Payment)
 		r.GET("/paymentdetails/:user_id", controllers.CompletedTrips)
 		r.GET("/activetrip", controllers.ActiveTrips)
+		r.PUT("/edit", controllers.EditUserDetails)
+		r.DELETE("/delete/:id", controllers.DeleteUser)
 	}
 
 }

@@ -65,6 +65,44 @@ func LoginUser(c *gin.Context) {
 	})
 }
 
+func EditUserDetails(c *gin.Context) {
+	var user models.User
+	if err := c.Bind(&user); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Bind Data",
+		})
+	}
+	data := map[string]interface{}{
+		"full_name":    user.FullName,
+		"birth_date":   user.BirthDate,
+		"email":        user.Email,
+		"password":     user.Password,
+		"phone_number": user.PhoneNumber,
+		"gender":       user.Gender,
+		"image":        user.Image,
+	}
+	if err := database.DB.Model(&models.User{}).Where("id=?", user.ID).Updates(data).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Update in Database",
+		})
+	}
+	c.JSON(200, gin.H{
+		"success": "Updated Succesfully",
+	})
+}
+
+func DeleteUser(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := database.DB.Where("id=?", id).Delete(&models.User{}).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to Delete User",
+		})
+	}
+	c.JSON(200, gin.H{
+		"success": "Deleted User Details",
+	})
+}
+
 func Payment(c *gin.Context) {
 	var input struct {
 		UserId   int    `json:"userid"`
