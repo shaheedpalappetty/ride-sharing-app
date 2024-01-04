@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"net/http"
 	"os"
 	"strconv"
 	"taxi_app/database"
@@ -39,9 +38,9 @@ func AdminLogin(c *gin.Context) {
 		})
 		return
 	}
-	//set token into browser
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("jwt_admin", token, 3600*24*30, "", "", true, true)
+	// //set token into browser
+	// c.SetSameSite(http.SameSiteLaxMode)
+	// c.SetCookie("jwt_admin", token, 3600*24*30, "", "", true, true)
 	//success message
 	c.JSON(200, gin.H{
 		"token": token,

@@ -11,8 +11,8 @@ import (
 )
 
 func AdminAuth(c *gin.Context) {
-	tokenString, err := c.Cookie("jwt_admin")
-	if err != nil {
+	tokenString := c.Request.Header.Get("token")
+	if tokenString == "" {
 		c.JSON(401, gin.H{
 			"error": "unautharized access",
 		})
@@ -27,7 +27,7 @@ func AdminAuth(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(500, gin.H{
-			"error": "error occurse while token generation",
+			"error": "error occurs while token generation",
 		})
 		c.Abort()
 		return
